@@ -1,12 +1,14 @@
 FROM centos:7
 
+ARG PORTAL_DOWNLOAD_URL
+
 ENV LANG en_US.utf8
 ENV LC_ALL en_US.UTF-8
 
-RUN yum install -y wget curl nmap-ncat which git postgresql && yum clean all
+RUN yum install -y wget curl nmap-ncat which && yum clean all
 
 ADD buildimage.sh /
-RUN /buildimage.sh
+RUN PORTAL_DOWNLOAD_URL=$PORTAL_DOWNLOAD_URL /buildimage.sh
 
 ADD docker-entrypoint.sh /
 

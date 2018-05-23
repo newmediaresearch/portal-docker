@@ -1,0 +1,5 @@
+{
+    "thumbnail": {
+        "path": "${VIDISPINE_THUMBNAIL_PATH}"
+    }
+}

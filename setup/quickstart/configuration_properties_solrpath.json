@@ -1,0 +1,4 @@
+{
+  "key": "solrpath",
+  "value": "${VIDISPINE_SOLR_PATH}"
+}

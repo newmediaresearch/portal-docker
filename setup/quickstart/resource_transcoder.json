@@ -1,0 +1,5 @@
+{
+  "transcoder": {
+    "url": "${VIDISPINE_TRANSCODER_URL}"
+  }
+}

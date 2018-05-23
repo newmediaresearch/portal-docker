@@ -28,17 +28,13 @@ export NOTIFIER_PORT="${NOTIFIER_PORT:-5000}"
 
 export PORTAL_CELERY_QUEUES="${PORTAL_CELERY_QUEUES:-celery,portal,indexer,indexer_collections,indexer_files,archiver,notifyindexer,re3}"
 
-export ENVIRONMENT_NAME="${ENVIRONMENT_NAME:-env_not_set}"
+export ENVIRONMENT_NAME="${ENVIRONMENT_NAME:-portal}"
 
 export PORTAL_CELERY_NUM_WORKERS="${PORTAL_CELERY_NUM_WORKERS:-5}"
 
 export PREVIEW_VIDEO_SHAPES="${PREVIEW_VIDEO_SHAPES:-lowres}"
 
-#export PORTALCONF=${PORTALCONF:-/tmp/portal.conf}
-
 cp /opt/cantemo/portal/configs/portal.conf.sample /tmp/portal.conf
-
-#portal.plugins.activedirectory.authentication.ActiveDirectoryBackend
 
 sed -e "s,^VIDISPINE_USERNAME.*,VIDISPINE_USERNAME: $VIDISPINE_USERNAME," -i /tmp/portal.conf
 sed -e "s,^VIDISPINE_PASSWORD.*,VIDISPINE_PASSWORD: $VIDISPINE_PASSWORD," -i /tmp/portal.conf
@@ -47,6 +43,7 @@ sed -e "s,^VIDISPINE_PORT.*,VIDISPINE_PORT: $VIDISPINE_PORT," -i /tmp/portal.con
 
 sed -e "s,^DATABASE_USER.*,DATABASE_USER: $DATABASE_USER," -i /tmp/portal.conf
 sed -e "s,^DATABASE_PASSWORD.*,DATABASE_PASSWORD: $DATABASE_PASSWORD," -i /tmp/portal.conf
+sed -e "s,^DATABASE_NAME.*,DATABASE_NAME: $DATABASE_NAME," -i /tmp/portal.conf
 sed -e "s,^DATABASE_HOST.*,DATABASE_HOST: $DATABASE_HOST," -i /tmp/portal.conf
 
 sed -e "s,^CACHE_LOCATION.*,CACHE_LOCATION: $MEMCACHED_HOST:$MEMCACHED_PORT," -i /tmp/portal.conf
@@ -76,7 +73,6 @@ sed -e "s,^PREVIEW_VIDEO_SHAPES.*,PREVIEW_VIDEO_SHAPES: $PREVIEW_VIDEO_SHAPES," 
     echo
 ) >> /tmp/portal.conf
 
-(echo "[elasticsearch]" ; echo "ELASTICSEARCH_URL: ${ELASTICSEARCH_URL}" ; echo ) >> /tmp/portal.conf
 (echo "[notifier]" ; echo "NOTIFIER_BIND_ADDRESS: 0.0.0.0"; echo "NOTIFIER_HOST: ${NOTIFIER_HOST}" ; echo) >> /tmp/portal.conf
 
 if [ "X${STATSD_HOST}" != "X" ]; then
@@ -88,26 +84,13 @@ sed -i -e "s,http://127.0.0.1:8080,http://${VIDISPINE_HOST}:${VIDISPINE_PORT}," 
 cp /tmp/portal.conf /etc/cantemo/portal/portal.conf
 
 if [ "X$@" = "X" ]; then
-    # If we haven't been given a specific command, run the default ones based on the PORTAL_ROLE
-    RETURN=$(curl -s -m 10 -u ${VIDISPINE_USERNAME}:${VIDISPINE_PASSWORD} --write-out %{http_code} --output /dev/null http://${VIDISPINE_HOST}:${VIDISPINE_PORT}/API/version) || /bin/true
-    if [ "$RETURN" != "200" ]; then
-        echo "Vidispine is not yet ready. Exiting."
-        exit 1
-    fi
-
     # If postgresql isn't ready yet, exit and let kubernetes restart us
-    if ! ncat ${DATABASE_HOST} 5432 < /dev/null; then
-        echo "Postgresql is not running on ${DATABASE_HOST}. Exiting"
-        exit 1
-    fi
-
-    # Run migrate in the setup role. This must be done
-    # before the startup routines since they may require a Portal database.
-    # Note: This still means that the plugin specific models are not available for startup
-    # scripts.
-    if [ "X$PORTAL_ROLE" = "Xsetup" ]; then
-        /opt/cantemo/portal/bin/south_migrate.sh
-    fi
+    echo 'Waiting for Postgres'
+    until $(ncat ${DATABASE_HOST} 5432 < /dev/null); do
+        echo '.'
+        sleep 1
+    done
+    echo 'Postgres is up'
 
     # Run all startup routines
     for script in /startup.d/*; do
@@ -138,24 +121,8 @@ if [ "X$@" = "X" ]; then
         # Run migrate in the setup pod only
         /opt/cantemo/portal/bin/south_migrate.sh
 
-        /setup_storages.py
-
-        /enable_apps.sh
-
         # Run setup scripts in the setup pod only
         for script in /setup.d/*; do
-            if [ -x $script ]; then
-                $script
-            fi
-        done
-        #flag setup as done
-        /setup_done.sh
-
-        # Run the wizard. This script waits until the portal-web service is available
-        /setup_wizard.sh
-
-        # Run setup scripts intended to be run after the wizard has completed
-        for script in /setup-post-wizard.d/*; do
             if [ -x $script ]; then
                 $script
             fi
@@ -163,6 +130,12 @@ if [ "X$@" = "X" ]; then
     elif [ "X$PORTAL_ROLE" = "Xnotifier" ]; then
         /opt/cantemo/python/bin/python \
             /opt/cantemo/portal/notifier/notifier.pyc
+    else
+        # Run migrate in the setup role. This must be done
+        # before the startup routines since they may require a Portal database.
+        # Note: This still means that the plugin specific models are not available
+        # for startup scripts.
+        /opt/cantemo/portal/bin/south_migrate.sh
     fi
 else
     $@

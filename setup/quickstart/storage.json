@@ -1,0 +1,14 @@
+{
+    "type": "LOCAL",
+    "method": [
+        {
+            "uri": "${VIDISPINE_STORAGE_URI}",
+            "read": true,
+            "write": true,
+            "browse": true,
+            "type": "NONE"
+        }
+    ],
+    "autoDetect": true,
+    "scanInterval": 5
+}
