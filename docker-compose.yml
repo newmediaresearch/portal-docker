@@ -93,6 +93,7 @@ services:
       - VIDISPINE_SOLR_PATH=${VIDISPINE_SOLR_PATH}
       - VIDISPINE_THUMBNAIL_PATH=${VIDISPINE_THUMBNAIL_PATH}
       - VIDISPINE_STORAGE_URI=${VIDISPINE_STORAGE_URI}
+      - PORTAL_HOST=${PORTAL_HOST}
     depends_on:
       - postgres
       - vidispineserver
