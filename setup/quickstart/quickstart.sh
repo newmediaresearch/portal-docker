@@ -29,4 +29,26 @@ fi
 
 echo "Vidispine Setup Complete!"
 
+echo 'Waiting For Activiti'
+until $(curl --output /dev/null --silent --head --fail "http://${ACTIVITI_HOST}:8008/"); do
+    echo '.'
+    sleep 1
+done
+echo 'Activiti Online!'
+
+# Create the admin user
+PGPASSWORD=${ACTIVITI_DB_PSWD} psql -h ${POSTGRES_HOST} -U ${ACTIVITI_DB_USER} \
+  -c "INSERT INTO act_id_user(id_, rev_, first_, last_, email_, pwd_)
+    VALUES('${ACTIVITI_USERNAME}', '1', 'Portal', 'Admin', '', '${ACTIVITI_PASSWORD}');"
+
+# Create the admin role
+PGPASSWORD=${ACTIVITI_DB_PSWD} psql -h ${POSTGRES_HOST} -U ${ACTIVITI_DB_USER} \
+  -c "INSERT INTO act_id_group VALUES('admin', '1', 'Admin', 'security-role');"
+
+# Add user admin to the admin role
+PGPASSWORD=${ACTIVITI_DB_PSWD} psql -h ${POSTGRES_HOST} -U ${ACTIVITI_DB_USER} \
+  -c "INSERT INTO act_id_membership VALUES('${ACTIVITI_USERNAME}', 'admin');"
+
+echo "Activiti Setup Complete!"
+
 exit 0

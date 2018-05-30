@@ -5,49 +5,22 @@ volumes:
   elasticsearch-volume: null
 
 services:
-
-# TODO: Fix the RE3 setup
-#  tomcat:
-#    image: eternnoir/activiti
-#    restart: always
-#    ports:
-#      - "8008:8080"
-#    volumes:
-#      - ./tomcat/jython-standalone-2.7.0.jar:/opt/tomcat/lib/jython-standalone-2.7.0.jar
-
-#  memcached:
-#    restart: always
-#    image: memcached
-
-#  portalsetup:
-#    image: dhub.cantemo.com/portalbase
-#    depends_on:
-#      - portalweb
-#      - portaldb
-#      - rabbitmq
-#      - memcached
-#    command: /setup.sh
-#    volumes:
-#      - ..:/portal
-#      - ./portalbase/setup.sh:/setup.sh
-
   postgres:
     build: ./postgres/
     image: nmr/postgres
     restart: always
     environment:
-      - POSTGRES_DB=${VIDISPINE_DB_NAME}
-      - POSTGRES_USER=${VIDISPINE_DB_USER}
-      - POSTGRES_PASSWORD=${VIDISPINE_DB_PSWD}
-      - PORTAL_DB_NAME=${PORTAL_DB_NAME}
-      - PORTAL_DB_USER=${PORTAL_DB_USER}
-      - PORTAL_DB_PSWD=${PORTAL_DB_PSWD}
-      - ACTIVITI_DB_NAME=${ACTIVITI_DB_NAME}
-      - ACTIVITI_DB_USER=${ACTIVITI_DB_USER}
-      - ACTIVITI_DB_PSWD=${ACTIVITI_DB_PSWD}
+      - 'POSTGRES_DB=${VIDISPINE_DB_NAME}'
+      - 'POSTGRES_USER=${VIDISPINE_DB_USER}'
+      - 'POSTGRES_PASSWORD=${VIDISPINE_DB_PSWD}'
+      - 'PORTAL_DB_NAME=${PORTAL_DB_NAME}'
+      - 'PORTAL_DB_USER=${PORTAL_DB_USER}'
+      - 'PORTAL_DB_PSWD=${PORTAL_DB_PSWD}'
+      - 'ACTIVITI_DB_NAME=${ACTIVITI_DB_NAME}'
+      - 'ACTIVITI_DB_USER=${ACTIVITI_DB_USER}'
+      - 'ACTIVITI_DB_PSWD=${ACTIVITI_DB_PSWD}'
     volumes:
       - 'database-volume:/var/lib/postgresql/data'
-
   vidispinetranscoder:
     build: ./vidispinetranscoder/
     image: nmr/vidispinetranscoder
@@ -55,109 +28,109 @@ services:
     ports:
       - '8888:8888'
     volumes:
-      - ./media/:/mnt/media
-
+      - './media/:/mnt/media'
   vidispinesolr:
     build: ./vidispinesolr/
     image: nmr/vidispinesolr
     restart: always
     environment:
-      - SOLR_HEAP=${SOLR_HEAP}
+      - 'SOLR_HEAP=${SOLR_HEAP}'
     ports:
       - '8983:8983'
-
   vidispineserver:
     build: ./vidispineserver/
     image: nmr/vidispineserver
     restart: always
     environment:
-      - VIDISPINE_DB_PSWD=${VIDISPINE_DB_PSWD}
-      - VIDISPINE_DB_USER=${VIDISPINE_DB_USER}
-      - VIDISPINE_DB_NAME=${VIDISPINE_DB_NAME}
-      - VIDISPINESERVER_HEAP=${VIDISPINESERVER_HEAP}
-      - POSTGRES_HOST=${POSTGRES_HOST}
+      - 'VIDISPINE_DB_PSWD=${VIDISPINE_DB_PSWD}'
+      - 'VIDISPINE_DB_USER=${VIDISPINE_DB_USER}'
+      - 'VIDISPINE_DB_NAME=${VIDISPINE_DB_NAME}'
+      - 'VIDISPINESERVER_HEAP=${VIDISPINESERVER_HEAP}'
+      - 'POSTGRES_HOST=${POSTGRES_HOST}'
     ports:
       - '8080:8080'
     depends_on:
-      - vidispinetranscoder
       - vidispinesolr
       - postgres
     volumes:
-      - ./media/:/mnt/media
-
+      - './media/:/mnt/media'
   setup:
     build: ./setup/
     environment:
-      - VIDISPINE_HOST=${VIDISPINE_HOST}
-      - VIDISPINE_TRANSCODER_URL=${VIDISPINE_TRANSCODER_URL}
-      - VIDISPINE_SOLR_PATH=${VIDISPINE_SOLR_PATH}
-      - VIDISPINE_THUMBNAIL_PATH=${VIDISPINE_THUMBNAIL_PATH}
-      - VIDISPINE_STORAGE_URI=${VIDISPINE_STORAGE_URI}
-      - PORTAL_HOST=${PORTAL_HOST}
+      - 'VIDISPINE_HOST=${VIDISPINE_HOST}'
+      - 'VIDISPINE_TRANSCODER_URL=${VIDISPINE_TRANSCODER_URL}'
+      - 'VIDISPINE_SOLR_PATH=${VIDISPINE_SOLR_PATH}'
+      - 'VIDISPINE_THUMBNAIL_PATH=${VIDISPINE_THUMBNAIL_PATH}'
+      - 'VIDISPINE_STORAGE_URI=${VIDISPINE_STORAGE_URI}'
+      - 'ACTIVITI_USERNAME=${ACTIVITI_USERNAME}'
+      - 'ACTIVITI_PASSWORD=${ACTIVITI_PASSWORD}'
+      - 'ACTIVITI_DB_USER=${ACTIVITI_DB_USER}'
+      - 'ACTIVITI_DB_PSWD=${ACTIVITI_DB_PSWD}'
+      - 'POSTGRES_HOST=${POSTGRES_HOST}'
+      - 'PORTAL_HOST=${PORTAL_HOST}'
     depends_on:
-      - postgres
       - vidispineserver
+      - activiti
     volumes:
       - './setup/quickstart:/quickstart'
-
   elasticsearch:
     build: ./elasticsearch/
     environment:
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ulimits:
       memlock:
         soft: -1
         hard: -1
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - '9200:9200'
+      - '9300:9300'
     volumes:
       - 'elasticsearch-volume:/usr/share/elasticsearch/data'
-
   kibana:
     build:
       context: kibana/
     volumes:
-      - ./kibana/config/:/usr/share/kibana/config:ro
+      - './kibana/config/:/usr/share/kibana/config:ro'
     ports:
-      - "5601:5601"
+      - '5601:5601'
     depends_on:
       - elasticsearch
-
   memcached:
     restart: always
     image: memcached
-
   portalbase:
     build: ./portal/
     image: nmr/portal
     environment:
-      - VIDISPINE_USERNAME=${VIDISPINE_USERNAME}
-      - VIDISPINE_PASSWORD=${VIDISPINE_PASSWORD}
-      - VIDISPINE_HOST=${VIDISPINE_HOST}
-      - VIDISPINE_PORT=${VIDISPINE_PORT}
-      - DATABASE_USER=${PORTAL_DB_USER}
-      - DATABASE_PASSWORD=${PORTAL_DB_PSWD}
-      - DATABASE_NAME=${PORTAL_DB_NAME}
-      - DATABASE_HOST=${POSTGRES_HOST}
-      - MEMCACHED_HOST=${MEMCACHED_HOST}
-      - MEMCACHED_PORT=${MEMCACHED_PORT}
-      - DEBUG=${DEBUG}
-      - DEVELOPMENT_SYSTEM=${DEVELOPMENT_SYSTEM}
-      - RE3_LOCAL=${RE3_LOCAL}
-      - RABBITMQ_HOST=${RABBITMQ_HOST}
-      - RABBITMQ_PORT=${RABBITMQ_PORT}
-      - RABBITMQ_USER=${RABBITMQ_USER}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
-      - RABBITMQ_VHOST=${RABBITMQ_VHOST}
-      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
-      - ELASTICSEARCH_USE_MORPHOLOGY=${ELASTICSEARCH_USE_MORPHOLOGY}
-      - NOTIFIER_HOST=${NOTIFIER_HOST}
-      - NOTIFIER_PORT=${NOTIFIER_PORT}
-      - PORTAL_CELERY_QUEUES=${PORTAL_CELERY_QUEUES}
-      - PORTAL_CELERY_NUM_WORKERS=${PORTAL_CELERY_NUM_WORKERS}
-
+      - 'VIDISPINE_USERNAME=${VIDISPINE_USERNAME}'
+      - 'VIDISPINE_PASSWORD=${VIDISPINE_PASSWORD}'
+      - 'VIDISPINE_HOST=${VIDISPINE_HOST}'
+      - 'VIDISPINE_PORT=${VIDISPINE_PORT}'
+      - 'DATABASE_USER=${PORTAL_DB_USER}'
+      - 'DATABASE_PASSWORD=${PORTAL_DB_PSWD}'
+      - 'DATABASE_NAME=${PORTAL_DB_NAME}'
+      - 'DATABASE_HOST=${POSTGRES_HOST}'
+      - 'MEMCACHED_HOST=${MEMCACHED_HOST}'
+      - 'MEMCACHED_PORT=${MEMCACHED_PORT}'
+      - 'DEBUG=${DEBUG}'
+      - 'DEVELOPMENT_SYSTEM=${DEVELOPMENT_SYSTEM}'
+      - 'RE3_LOCAL=${RE3_LOCAL}'
+      - 'RABBITMQ_HOST=${RABBITMQ_HOST}'
+      - 'RABBITMQ_PORT=${RABBITMQ_PORT}'
+      - 'RABBITMQ_USER=${RABBITMQ_USER}'
+      - 'RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}'
+      - 'RABBITMQ_VHOST=${RABBITMQ_VHOST}'
+      - 'ELASTICSEARCH_URL=${ELASTICSEARCH_URL}'
+      - 'ELASTICSEARCH_USE_MORPHOLOGY=${ELASTICSEARCH_USE_MORPHOLOGY}'
+      - 'NOTIFIER_HOST=${NOTIFIER_HOST}'
+      - 'NOTIFIER_PORT=${NOTIFIER_PORT}'
+      - 'PORTAL_CELERY_QUEUES=${PORTAL_CELERY_QUEUES}'
+      - 'PORTAL_CELERY_NUM_WORKERS=${PORTAL_CELERY_NUM_WORKERS}'
+      - 'ACTIVITI_HOST=${ACTIVITI_HOST}'
+      - 'ACTIVITI_PORT=${ACTIVITI_PORT}'
+      - 'ACTIVITI_USERNAME=${ACTIVITI_USERNAME}'
+      - 'ACTIVITI_PASSWORD=${ACTIVITI_PASSWORD}'
   portalweb:
     extends:
       service: portalbase
@@ -167,10 +140,9 @@ services:
       - postgres
       - elasticsearch
     ports:
-      - "80:80"
+      - '80:80'
     environment:
       - PORTAL_ROLE=web
-
   celeryd:
     extends:
       service: portalbase
@@ -182,7 +154,6 @@ services:
     environment:
       - C_FORCE_ROOT=1
       - PORTAL_ROLE=celery
-
   celerybeat:
     extends:
       service: portalbase
@@ -192,22 +163,34 @@ services:
       - postgres
     environment:
       - PORTAL_ROLE=beat
-
   notifier:
     extends:
       service: portalbase
     restart: always
     ports:
-      - "5000:5000"
+      - '5000:5000'
     depends_on:
       - rabbitmq
     environment:
       - PORTAL_ROLE=notifier
-
   rabbitmq:
     image: rabbitmq
     restart: always
     environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
-      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST}
+      - 'RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}'
+      - 'RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}'
+      - 'RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST}'
+  activiti:
+    image: nmr/activiti
+    restart: always
+    ports:
+      - '8008:8080'
+    depends_on:
+      - postgres
+    environment:
+      - 'DB_TYPE=postgres'
+      - 'DB_HOST=${POSTGRES_HOST}'
+      - 'DB_PORT=${POSTGRES_PORT}'
+      - 'DB_NAME=${ACTIVITI_DB_NAME}'
+      - 'DB_USER=${ACTIVITI_DB_USER}'
+      - 'DB_PASS=${ACTIVITI_DB_PSWD}'

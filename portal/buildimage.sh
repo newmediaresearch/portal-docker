@@ -3,15 +3,15 @@
 mkdir /install
 cd /install
 
-wget -q $PORTAL_DOWNLOAD_URL
+wget -q $PORTAL_DOWNLOAD_URL -O Portal.tar
 
-tar xvf /RedHat*
+tar xvf Portal.tar
 
-cd /rpm/RedHat*[0-9]
+cd RedHat*[0-9]
 
 yum install -y resources/portal/*.rpm resources/portal/postgresql/*.rpm
 
-rm -rf /install/RedHat*
+rm -rf /install/RedHat* Portal.tar
 
 yum clean all
 
