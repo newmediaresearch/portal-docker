@@ -57,6 +57,7 @@ sed -e "s,^CELERY_ALWAYS_EAGER.*,CELERY_ALWAYS_EAGER: False\nBROKER_URL: amqp://
 sed "/\[celery\]/a CELERYD_CONCURRENCY: ${PORTAL_CELERY_NUM_WORKERS}" -i /tmp/portal.conf
 # As of portal 3.2.x this is now auto-scaling and the option has been renamed
 sed "/\[celery\]/a CELERY_MAXIMUM_WORKERS: ${PORTAL_CELERY_NUM_WORKERS}" -i /tmp/portal.conf
+sed "/\[celery\]/a FLOWER_URL: ${FLOWER_URL}" -i /tmp/portal.conf
 
 sed "/\[replace_urls\]/a http%3A//$VIDISPINE_HOST%3A$VIDISPINE_PORT/APInoauth/ = /APInoauth/" -i /tmp/portal.conf
 
@@ -110,7 +111,7 @@ if [ "X$@" = "X" ]; then
     elif [ "X$PORTAL_ROLE" = "Xcelery" ]; then
         /opt/cantemo/portal/manage.py celery worker -Q $PORTAL_CELERY_QUEUES
     elif [ "X$PORTAL_ROLE" = "Xflower" ]; then
-        /opt/cantemo/portal/manage.py celery flower
+        /opt/cantemo/portal/manage.py celery flower --url-prefix=background_tasks
     elif [ "X$PORTAL_ROLE" = "Xbeat" ]; then
         /opt/cantemo/portal/manage.py \
             celery beat \

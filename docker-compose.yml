@@ -136,6 +136,7 @@ services:
       - 'ACTIVITI_USERNAME=${ACTIVITI_USERNAME}'
       - 'ACTIVITI_PASSWORD=${ACTIVITI_PASSWORD}'
       - 'PORTAL_HOST=${PORTAL_HOST}'
+      - 'FLOWER_URL=${FLOWER_URL}'
   portalweb:
     extends:
       service: portalbase
@@ -168,6 +169,16 @@ services:
       - postgres
     environment:
       - PORTAL_ROLE=beat
+  flower:
+    extends:
+      service: portalbase
+    restart: always
+    ports:
+      - '5555:5555'
+    depends_on:
+      - rabbitmq
+    environment:
+      - PORTAL_ROLE=flower
   notifier:
     extends:
       service: portalbase
