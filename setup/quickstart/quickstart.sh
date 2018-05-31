@@ -30,7 +30,7 @@ fi
 echo "Vidispine Setup Complete!"
 
 echo 'Waiting For Activiti'
-until $(curl --output /dev/null --silent --head --fail "http://${ACTIVITI_HOST}:8008/"); do
+until $(curl --output /dev/null --silent --head --fail "http://${ACTIVITI_HOST}:${ACTIVITI_PORT}/"); do
     echo '.'
     sleep 1
 done
