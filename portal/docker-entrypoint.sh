@@ -137,10 +137,10 @@ if [ "X$@" = "X" ]; then
         # for startup scripts.
         /opt/cantemo/portal/bin/south_migrate.sh
         /opt/cantemo/portal/manage.py initialize_rules_engine_settings \
-          --activiti-portal-url='http://${PORTAL_HOST}'
-          --activiti-username='${ACTIVITI_USER}'
-          --activiti-password='${ACTIVITI_PASSWORD}'
-          --activiti-url='http://${ACTIVITI_HOST}:${ACTIVITI_PORT}'
+          --activiti-portal-url http://${PORTAL_HOST} \
+          --activiti-username ${ACTIVITI_USER} \
+          --activiti-password ${ACTIVITI_PASSWORD} \
+          --activiti-url http://${ACTIVITI_HOST}:${ACTIVITI_PORT}
     fi
 else
     $@
