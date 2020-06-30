@@ -1,14 +1,24 @@
 Portal in Docker
 ================
 
-A license key for Portal is required. You can obtain one from your system integrator.
 
-Building
---------
+Getting started
+---------------
 
-> docker-compose build \
---build-arg VIDISPINE_VERSION=4.12 \
---build-arg PORTAL_DOWNLOAD_URL=http://www2.cantemo.com/files/transfer/07/07382da5cd68561ee1035274871ea28e0d64e045/RedHat7_Portal_3.4.1.tar
+You will first need to obtain a Portal License key. You can obtain one from your system integrator.
+Once you have it, please rename it to `key` and place it inside the `portal` directory.
+
+Then execute the following:
+
+    make run-3.2.8
+
+This will bring up portal 3.2.8 and all containers needed. To bring up other versions, simply change the version number after `run-`.
+
+Not all versions of portal are supported yet however, please see the `Makefile` to see which ones have been implemented.
+
+You can now access the portal installation by going to http://your.docker.server in your browser.
+
+To shutdown, simply press ctrl-c.
 
 Configuration
 -------------
@@ -17,13 +27,3 @@ This .env file will be read by docker-compose and used to configure
 portal inside the containers. In the sample file, most of the services
 are assumed to be run as Amazon services, so the actual configuration
 parameters may vary depending on your specific setup.
-
-Running
--------
-
-Once you have configured the docker-compose environment you can bring up the system with the commands:
-
-> docker-compose up -d
-
-This will bring up all the portal components and you can now access
-the portal installation by going to http://your.docker.server in your browser.

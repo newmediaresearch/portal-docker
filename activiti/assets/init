@@ -1,0 +1,44 @@
+#!/bin/bash
+set -e
+set -x
+
+# configure tomcat admin user/password
+TOMCAT_ADMIN_USER=${TOMCAT_ADMIN_USER:-admin}
+TOMCAT_ADMIN_PASSWORD=${TOMCAT_ADMIN_PASSWORD:-admin}
+sed 's,{{TOMCAT_ADMIN_USER}},'"${TOMCAT_ADMIN_USER}"',g' -i /opt/tomcat/conf/tomcat-users.xml
+sed 's,{{TOMCAT_ADMIN_PASSWORD}},'"${TOMCAT_ADMIN_PASSWORD}"',g' -i /opt/tomcat/conf/tomcat-users.xml
+
+# postgres db
+DB_TYPE=${DB_TYPE:-}
+DB_HOST=${DB_HOST:-}
+DB_PORT=${DB_PORT:-5432}
+DB_NAME=${DB_NAME:-}
+DB_USER=${DB_USER:-}
+DB_PASS=${DB_PASS:-}
+
+if [ -z "${DB_HOST}" ]; then
+  echo "WARNING: "
+  echo "  No postgres connection available."
+  echo "  Will work with default H2 in-memory database."
+  unset DB_TYPE
+fi
+
+case "${DB_TYPE}" in
+  postgres)
+    sed 's/{{DB_PORT}}/'"${DB_PORT}"'/g' -i /assets/config/db.properties
+    sed 's/{{DB_HOST}}/'"${DB_HOST}"'/g' -i /assets/config/db.properties
+    sed 's/{{DB_NAME}}/'"${DB_NAME}"'/g' -i /assets/config/db.properties
+    sed 's/{{DB_USER}}/'"${DB_USER}"'/g' -i /assets/config/db.properties
+    sed 's/{{DB_PASS}}/'"${DB_PASS}"'/g' -i /assets/config/db.properties
+    cp -f /assets/config/db.properties /opt/tomcat/webapps/activiti-rest/WEB-INF/classes
+    cp -f /assets/config/db.properties /opt/tomcat/webapps/activiti-explorer/WEB-INF/classes
+    ;;
+esac
+
+cp -f /assets/config/engine.properties /opt/tomcat/webapps/activiti-explorer/WEB-INF/classes
+cp -f /assets/config/engine.properties /opt/tomcat/webapps/activiti-rest/WEB-INF/classes
+
+cp -f /assets/config/log4j.properties /opt/tomcat/webapps/activiti-explorer/WEB-INF/classes
+cp -f /assets/config/log4j.properties /opt/tomcat/webapps/activiti-rest/WEB-INF/classes
+
+/opt/tomcat/bin/catalina.sh run
