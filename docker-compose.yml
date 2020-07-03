@@ -49,7 +49,7 @@ services:
       - 'database-volume:/var/lib/postgresql/data'
 
   vidispinetranscoder:
-    container_name: vidispine-transcoder
+    container_name: portal-transcoder
     build:
       context: ./vidispinetranscoder/
       args:
@@ -64,7 +64,7 @@ services:
       driver: "none"
 
   vidispinesolr:
-    container_name: vidispine-solr
+    container_name: portal-solr
     build:
       context: ./vidispinesolr/
       args:

@@ -6,7 +6,8 @@ Getting started
 ---------------
 
 You will first need to obtain a Portal License key. You can obtain one from your system integrator.
-Once you have it, please rename it to `key` and place it inside the `portal` directory.
+Once you have it, please rename it
+ to `key` and place it inside the root of the repository.
 
 Then execute the following:
 
