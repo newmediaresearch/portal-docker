@@ -106,6 +106,7 @@ services:
       - postgres
     volumes:
       - './media/:/mnt/media'
+    mac_address: 00:0c:29:8f:ab:2a
     # logging:
     #   driver: "none"
 
