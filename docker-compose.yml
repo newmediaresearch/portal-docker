@@ -84,6 +84,10 @@ services:
       context: ./vidispineserver/
       args:
         - VIDISPINE_VERSION=${VIDISPINE_VERSION}
+        - 'VIDISPINE_DB_PSWD=${VIDISPINE_DB_PSWD}'
+        - 'VIDISPINE_DB_USER=${VIDISPINE_DB_USER}'
+        - 'VIDISPINE_DB_NAME=${VIDISPINE_DB_NAME}'
+        - 'POSTGRES_HOST=${POSTGRES_HOST}'
     image: nmr/vidispineserver
     restart: always
     environment:
