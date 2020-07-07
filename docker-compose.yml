@@ -60,8 +60,8 @@ services:
       - '8888:8888'
     volumes:
       - './media/:/mnt/media'
-    # logging:
-    #   driver: "none"
+    logging:
+      driver: "none"
 
   vidispinesolr:
     container_name: portal-solr
@@ -107,8 +107,8 @@ services:
     volumes:
       - './media/:/mnt/media'
     mac_address: 00:0c:29:8f:ab:2a
-    # logging:
-    #   driver: "none"
+    logging:
+      driver: "none"
 
   elasticsearch:
     container_name: portal-elasticsearch
@@ -223,7 +223,6 @@ services:
       - rabbitmq
       - postgres
       - elasticsearch
-    privileged: true
     ports:
       - '80:80'
     environment:
@@ -238,7 +237,6 @@ services:
       - rabbitmq
       - postgres
       - elasticsearch
-    privileged: true
     environment:
       - C_FORCE_ROOT=1
       - PORTAL_ROLE=celery
@@ -253,7 +251,6 @@ services:
     depends_on:
       - rabbitmq
       - postgres
-    privileged: true
     environment:
       - PORTAL_ROLE=beat
     logging:
@@ -267,7 +264,6 @@ services:
       - '5555:5555'
     depends_on:
       - rabbitmq
-    privileged: true
     environment:
       - PORTAL_ROLE=flower
     logging:
@@ -282,7 +278,6 @@ services:
       - '5000:5000'
     depends_on:
       - rabbitmq
-    privileged: true
     environment:
       - PORTAL_ROLE=notifier
     logging:
