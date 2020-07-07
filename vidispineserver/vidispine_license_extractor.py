@@ -4,6 +4,7 @@ LICENSE_FILE = '/etc/vidispine/License.lic'
 PORTAL_KEY = '/usr/local/bin/key'
 
 config = RawConfigParser()
+config.optionxform = str
 config.read(PORTAL_KEY)
 
 with open(LICENSE_FILE, 'w') as outfile:
