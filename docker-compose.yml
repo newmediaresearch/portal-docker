@@ -59,7 +59,8 @@ services:
     ports:
       - '8888:8888'
     volumes:
-      - './media/:/mnt/media'
+      - './media/media1:/srv/media1'
+      - './media/thumbnail:/srv/thumbnail'
     logging:
       driver: "none"
 
@@ -105,7 +106,8 @@ services:
       - vidispinesolr
       - postgres
     volumes:
-      - './media/:/mnt/media'
+      - './media/media1:/srv/media1'
+      - './media/thumbnail:/srv/thumbnail'
     mac_address: 00:0c:29:8f:ab:2a
     logging:
       driver: "none"
