@@ -5,56 +5,9 @@ volumes:
   elasticsearch-volume: null
 
 services:
-  postgres:
-    build: ./postgres/
-    image: nmr/postgres
-    restart: always
-    environment:
-      - 'POSTGRES_DB=${VIDISPINE_DB_NAME}'
-      - 'POSTGRES_USER=${VIDISPINE_DB_USER}'
-      - 'POSTGRES_PASSWORD=${VIDISPINE_DB_PSWD}'
-      - 'PORTAL_DB_NAME=${PORTAL_DB_NAME}'
-      - 'PORTAL_DB_USER=${PORTAL_DB_USER}'
-      - 'PORTAL_DB_PSWD=${PORTAL_DB_PSWD}'
-      - 'ACTIVITI_DB_NAME=${ACTIVITI_DB_NAME}'
-      - 'ACTIVITI_DB_USER=${ACTIVITI_DB_USER}'
-      - 'ACTIVITI_DB_PSWD=${ACTIVITI_DB_PSWD}'
-    volumes:
-      - 'database-volume:/var/lib/postgresql/data'
-  vidispinetranscoder:
-    build: ./vidispinetranscoder/
-    image: nmr/vidispinetranscoder
-    restart: always
-    ports:
-      - '8888:8888'
-    volumes:
-      - './media/:/mnt/media'
-  vidispinesolr:
-    build: ./vidispinesolr/
-    image: nmr/vidispinesolr
-    restart: always
-    environment:
-      - 'SOLR_HEAP=${SOLR_HEAP}'
-    ports:
-      - '8983:8983'
-  vidispineserver:
-    build: ./vidispineserver/
-    image: nmr/vidispineserver
-    restart: always
-    environment:
-      - 'VIDISPINE_DB_PSWD=${VIDISPINE_DB_PSWD}'
-      - 'VIDISPINE_DB_USER=${VIDISPINE_DB_USER}'
-      - 'VIDISPINE_DB_NAME=${VIDISPINE_DB_NAME}'
-      - 'VIDISPINESERVER_HEAP=${VIDISPINESERVER_HEAP}'
-      - 'POSTGRES_HOST=${POSTGRES_HOST}'
-    ports:
-      - '8080:8080'
-    depends_on:
-      - vidispinesolr
-      - postgres
-    volumes:
-      - './media/:/mnt/media'
+
   setup:
+    container_name: portal-setup
     build: ./setup/
     image: nmr/setup
     environment:
@@ -76,7 +29,91 @@ services:
       - activiti
     volumes:
       - './setup/quickstart:/quickstart'
+
+  postgres:
+    container_name: portal-postgres
+    build: ./postgres/
+    image: nmr/postgres
+    restart: always
+    environment:
+      - 'POSTGRES_DB=${VIDISPINE_DB_NAME}'
+      - 'POSTGRES_USER=${VIDISPINE_DB_USER}'
+      - 'POSTGRES_PASSWORD=${VIDISPINE_DB_PSWD}'
+      - 'PORTAL_DB_NAME=${PORTAL_DB_NAME}'
+      - 'PORTAL_DB_USER=${PORTAL_DB_USER}'
+      - 'PORTAL_DB_PSWD=${PORTAL_DB_PSWD}'
+      - 'ACTIVITI_DB_NAME=${ACTIVITI_DB_NAME}'
+      - 'ACTIVITI_DB_USER=${ACTIVITI_DB_USER}'
+      - 'ACTIVITI_DB_PSWD=${ACTIVITI_DB_PSWD}'
+    volumes:
+      - 'database-volume:/var/lib/postgresql/data'
+
+  vidispinetranscoder:
+    container_name: portal-transcoder
+    build:
+      context: ./vidispinetranscoder/
+      args:
+        - VIDISPINE_VERSION=${VIDISPINE_VERSION}
+    image: nmr/vidispinetranscoder
+    restart: always
+    ports:
+      - '8888:8888'
+    volumes:
+      - './media/media1:/srv/media1'
+      - './media/thumbnail:/srv/thumbnail'
+    logging:
+      driver: "none"
+
+  vidispinesolr:
+    container_name: portal-solr
+    build:
+      context: ./vidispinesolr/
+      args:
+        - VIDISPINE_VERSION=${VIDISPINE_VERSION}
+    image: nmr/vidispinesolr
+    restart: always
+    environment:
+      - 'SOLR_HEAP=${SOLR_HEAP}'
+    ports:
+      - '8983:8983'
+    logging:
+      driver: "none"
+
+  vidispineserver:
+    container_name: portal-vidispine
+    build:
+      context: ./vidispineserver/
+      args:
+        - VIDISPINE_VERSION=${VIDISPINE_VERSION}
+        - 'VIDISPINE_DB_PSWD=${VIDISPINE_DB_PSWD}'
+        - 'VIDISPINE_DB_USER=${VIDISPINE_DB_USER}'
+        - 'VIDISPINE_DB_NAME=${VIDISPINE_DB_NAME}'
+        - 'POSTGRES_HOST=${POSTGRES_HOST}'
+    image: nmr/vidispineserver
+    restart: always
+    environment:
+      - 'VIDISPINE_DB_PSWD=${VIDISPINE_DB_PSWD}'
+      - 'VIDISPINE_DB_USER=${VIDISPINE_DB_USER}'
+      - 'VIDISPINE_DB_NAME=${VIDISPINE_DB_NAME}'
+      - 'VIDISPINESERVER_HEAP=${VIDISPINESERVER_HEAP}'
+      - 'POSTGRES_HOST=${POSTGRES_HOST}'
+    ports:
+      - '8080:8080'
+      - '8088:8088'
+      - '8089:8089'
+      - '9001:9001'
+    depends_on:
+      - vidispinesolr
+      - postgres
+    volumes:
+      - './media/media1:/srv/media1'
+      - './media/thumbnail:/srv/thumbnail'
+    mac_address: 00:0c:29:8f:ab:2a
+    logging:
+      driver: "none"
+
   elasticsearch:
+    container_name: portal-elasticsearch
     build: ./elasticsearch/
     image: nmr/elasticsearch
     environment:
@@ -91,7 +128,11 @@ services:
       - '9300:9300'
     volumes:
       - 'elasticsearch-volume:/usr/share/elasticsearch/data'
+    logging:
+      driver: "none"
+
   kibana:
+    container_name: portal-kibana
     build: ./kibana/
     image: nmr/kibana
     volumes:
@@ -100,11 +141,48 @@ services:
       - '5601:5601'
     depends_on:
       - elasticsearch
+    logging:
+      driver: "none"
+
   memcached:
+    container_name: portal-memcache
     restart: always
     image: memcached
+
+  rabbitmq:
+    container_name: portal-rabbitmq
+    image: rabbitmq
+    restart: always
+    environment:
+      - 'RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}'
+      - 'RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}'
+      - 'RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST}'
+    logging:
+      driver: "none"
+
+  activiti:
+    container_name: portal-activiti
+    build: ./activiti/
+    restart: always
+    ports:
+      - '8008:8080'
+    depends_on:
+      - postgres
+    environment:
+      - 'DB_TYPE=postgres'
+      - 'DB_HOST=${POSTGRES_HOST}'
+      - 'DB_PORT=${POSTGRES_PORT}'
+      - 'DB_NAME=${ACTIVITI_DB_NAME}'
+      - 'DB_USER=${ACTIVITI_DB_USER}'
+      - 'DB_PASS=${ACTIVITI_DB_PSWD}'
+    logging:
+      driver: "none"
+
   portalbase:
-    build: ./portal/
+    build:
+      context: ./portal/
+      args:
+        - PORTAL_DOWNLOAD_URL=${PORTAL_DOWNLOAD_URL}
     image: nmr/portal
     environment:
       - 'VIDISPINE_USERNAME=${VIDISPINE_USERNAME}'
@@ -112,9 +190,9 @@ services:
       - 'VIDISPINE_HOST=${VIDISPINE_HOST}'
       - 'VIDISPINE_PORT=${VIDISPINE_PORT}'
       - 'DATABASE_USER=${PORTAL_DB_USER}'
-      - 'DATABASE_PASSWORD=${PORTAL_DB_PSWD}'
-      - 'DATABASE_NAME=${PORTAL_DB_NAME}'
       - 'DATABASE_HOST=${POSTGRES_HOST}'
+      - 'DATABASE_NAME=${PORTAL_DB_NAME}'
+      - 'DATABASE_PASSWORD=${PORTAL_DB_PSWD}'
       - 'MEMCACHED_HOST=${MEMCACHED_HOST}'
       - 'MEMCACHED_PORT=${MEMCACHED_PORT}'
       - 'DEBUG=${DEBUG}'
@@ -137,7 +215,9 @@ services:
       - 'ACTIVITI_PASSWORD=${ACTIVITI_PASSWORD}'
       - 'PORTAL_HOST=${PORTAL_HOST}'
       - 'FLOWER_URL=${FLOWER_URL}'
-  portalweb:
+
+  portal-web:
+    container_name: portal-web
     extends:
       service: portalbase
     restart: always
@@ -149,7 +229,9 @@ services:
       - '80:80'
     environment:
       - PORTAL_ROLE=web
+
   celeryd:
+    container_name: portal-celeryd
     extends:
       service: portalbase
     restart: always
@@ -160,7 +242,11 @@ services:
     environment:
       - C_FORCE_ROOT=1
       - PORTAL_ROLE=celery
+    logging:
+      driver: "none"
+
   celerybeat:
+    container_name: portal-celerybeat
     extends:
       service: portalbase
     restart: always
@@ -169,17 +255,24 @@ services:
       - postgres
     environment:
       - PORTAL_ROLE=beat
+    logging:
+      driver: "none"
+
   flower:
+    container_name: portal-flower
     extends:
       service: portalbase
-    restart: always
     ports:
       - '5555:5555'
     depends_on:
       - rabbitmq
     environment:
       - PORTAL_ROLE=flower
+    logging:
+      driver: "none"
+
   notifier:
+    container_name: portal-notifier
     extends:
       service: portalbase
     restart: always
@@ -189,24 +282,5 @@ services:
       - rabbitmq
     environment:
       - PORTAL_ROLE=notifier
-  rabbitmq:
-    image: rabbitmq
-    restart: always
-    environment:
-      - 'RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}'
-      - 'RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}'
-      - 'RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST}'
-  activiti:
-    image: nmr/activiti
-    restart: always
-    ports:
-      - '8008:8080'
-    depends_on:
-      - postgres
-    environment:
-      - 'DB_TYPE=postgres'
-      - 'DB_HOST=${POSTGRES_HOST}'
-      - 'DB_PORT=${POSTGRES_PORT}'
-      - 'DB_NAME=${ACTIVITI_DB_NAME}'
-      - 'DB_USER=${ACTIVITI_DB_USER}'
-      - 'DB_PASS=${ACTIVITI_DB_PSWD}'
+    logging:
+      driver: "none"

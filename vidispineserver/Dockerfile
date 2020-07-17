@@ -1,14 +1,21 @@
 FROM centos:7
 
+ARG POSTGRES_HOST
 ARG VIDISPINE_VERSION
+ARG VIDISPINE_DB_NAME
+ARG VIDISPINE_DB_USER
+ARG VIDISPINE_DB_PSWD
 
 ADD buildimage.sh /
+ADD key /usr/local/bin/key
 RUN chmod +x /buildimage.sh
 RUN VIDISPINE_VERSION=$VIDISPINE_VERSION /buildimage.sh
 
 RUN yum install -y PyYAML
-COPY vidispine-server-config.py /usr/local/bin/
-RUN python /usr/local/bin/vidispine-server-config.py
+COPY vidispine_server_config.py /usr/local/bin/
+COPY vidispine_license_extractor.py /usr/local/bin/
+RUN python /usr/local/bin/vidispine_server_config.py
+RUN python /usr/local/bin/vidispine_license_extractor.py
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh

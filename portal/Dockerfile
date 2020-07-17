@@ -5,15 +5,22 @@ ARG PORTAL_DOWNLOAD_URL
 ENV LANG en_US.utf8
 ENV LC_ALL en_US.UTF-8
 
-RUN yum install -y wget curl nmap-ncat which && yum clean all
+RUN yum install -y curl nmap-ncat which
 
-ADD buildimage.sh /
-RUN PORTAL_DOWNLOAD_URL=$PORTAL_DOWNLOAD_URL /buildimage.sh
+WORKDIR /install
+RUN curl $PORTAL_DOWNLOAD_URL -o Portal.tar
+RUN tar xvf Portal.tar
+RUN yum install -y RedHat*[0-9]/resources/portal/*.rpm RedHat*[0-9]/resources/portal/postgresql/*.rpm
+
+WORKDIR /
+RUN rm -rf /install/RedHat* /install/Portal.tar
+RUN yum clean all
+
+RUN echo "COMPRESS_ENABLED = False" >> /opt/cantemo/portal/portal/localsettings.py
+RUN echo "STATSD_CELERY_SIGNALS = True" >> /opt/cantemo/portal/portal/localsettings.py
 
 ADD docker-entrypoint.sh /
-
 ADD logging.conf /etc/cantemo/portal/logging.conf
-
 ADD nginx/pass_access_scheme.conf /etc/nginx/conf.d/pass_access_scheme.conf
 
 # Make sure the logs are written to stdout in the container
